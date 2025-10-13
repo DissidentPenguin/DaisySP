@@ -270,14 +270,16 @@ inline void TestFloat(float &x, float y = 0.f)
 /** Based on soft saturate from:
 [musicdsp.org](musicdsp.org/en/latest/Effects/42-soft-saturation.html)
 Bram de Jong (2002-01-17)
-This still needs to be tested/fixed. Definitely does some weird stuff
-described as:
-x < a:
-     f(x) = x
-x > a:
-     f(x) = a + (x-a)/(1+((x-a)/(1-a))^2)
-x > 1:
+if x > 1:
+    // Overflow condition should be tested first
      f(x) = (a + 1)/2
+else
+    // Apply saturation curve
+    x < a:
+         f(x) = x
+    x > a:
+         f(x) = a + (x-a)/(1+((x-a)/(1-a))^2)
+
 */
 inline float soft_saturate(float in, float thresh)
 {
@@ -287,15 +289,15 @@ inline float soft_saturate(float in, float thresh)
     out  = 0.f;
     flip = in < 0.0f;
     val  = flip ? -in : in;
-    if(val < thresh)
-    {
-        out = in;
-    }
-    else if(val > 1.0f)
+    if(val > 1.0f)
     {
         out = (thresh + 1.0f) / 2.0f;
         if(flip)
             out *= -1.0f;
+    }
+    else if(val < thresh)
+    {
+        out = in;
     }
     else if(val > thresh)
     {
